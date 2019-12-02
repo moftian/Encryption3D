@@ -13,7 +13,11 @@ option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 
 add_subdirectory(libigl)
 
-set(SrcFiles src/main.cpp)
+set(SrcFiles src/main.cpp
+        src/encryption3D.cpp
+        src/encryption3D.hpp
+        src/rsa.hpp
+        src/rsa.cpp)
 
 add_executable(MiniProjet ${SrcFiles})
 target_link_libraries(MiniProjet igl::core igl::opengl_glfw)

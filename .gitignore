@@ -11,6 +11,7 @@
 *.ko
 *.obj
 *.elf
+!/models/*.obj
 
 # Linker output
 *.ilk
