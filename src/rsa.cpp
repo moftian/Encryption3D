@@ -56,7 +56,7 @@ namespace encrypt3d {
         //std::cout << "p: " << m_p << "\nq: " << m_q << std::endl;
         m_n = p * q;
         uint32_t m_phi=(p-1)*(q-1);
-        //std::cout << "n: " << m_n << std::endl << "phi: " << m_phi << std::endl;
+        //std::cout << "n: " << m_bits << std::endl << "phi: " << m_phi << std::endl;
         //std::cout << "e: " << m_e << std::endl;
         m_d = modInverse(m_e, m_phi);
         //std::cout << "d: " << m_d << std::endl;

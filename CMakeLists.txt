@@ -13,11 +13,19 @@ option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 
 add_subdirectory(libigl)
 
-set(SrcFiles src/main.cpp
-        src/encryption3D.cpp
-        src/encryption3D.hpp
+set(SrcFiles
+        external/paillier/paillier.c
+        external/paillier/paillier.h
+        src/main.cpp
+        src/chiffre32.cpp
+        src/chiffre32.hpp
         src/rsa.hpp
-        src/rsa.cpp)
+        src/rsa.cpp
+        src/paillier.cpp
+        src/paillier.hpp src/chiffre64.cpp src/chiffre64.hpp src/encryption3d.hpp src/encryption3d.cpp src/encryption3d.hpp)
 
 add_executable(MiniProjet ${SrcFiles})
-target_link_libraries(MiniProjet igl::core igl::opengl_glfw)
+
+target_include_directories(MiniProjet PRIVATE ./external)
+
+target_link_libraries(MiniProjet igl::core igl::opengl_glfw gmp)
