@@ -11,7 +11,7 @@ option(LIBIGL_WITH_OPENGL_GLFW       "Use GLFW"           ON)
 option(LIBIGL_WITH_PYTHON            "Use PYTHON"         OFF)
 option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 
-add_subdirectory(libigl)
+add_subdirectory(external/libigl)
 
 set(SrcFiles
         external/paillier/paillier.c

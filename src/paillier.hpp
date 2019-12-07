@@ -32,8 +32,8 @@ namespace encrypt3d {
 
   private:
     int32_t m_bits;
-    paillier_prvkey_t *m_prv_key;
-    paillier_pubkey_t *m_pub_key;
+    paillier_prvkey_t* m_prv_key;
+    paillier_pubkey_t* m_pub_key;
   };
 
 }

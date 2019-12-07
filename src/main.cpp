@@ -1,28 +1,34 @@
 #include <igl/readOFF.h>
 #include <igl/readOBJ.h>
 #include <igl/opengl/glfw/Viewer.h>
-#include <limits>
 
+#include "encryption3d.hpp"
 #include "chiffre32.hpp"
 #include "chiffre64.hpp"
 #include "paillier.hpp"
 
 #ifndef __STDC_IEC_559__
-  #error The following Programm only supports float operations using the IEEE 754 Standard
+  #error The following Programm only supports float operations using the IEEE 754 Standard.
 #endif
 
 int main(int argc, char** argv)
 {
   using namespace encrypt3d;
 
-  /*
   Eigen::MatrixXd vertices;
   Eigen::MatrixXi faces;
 
   igl::readOBJ("../models/suzanne.obj", vertices, faces);
 
+  std::string msg = "Je sais pas quoi faire.";
+
   Eigen::MatrixXf verticesEncrypte(vertices.rows(), vertices.cols());
   Eigen::MatrixXf verticesF = vertices.cast<float>();
+
+  Encryption3D::insereMsgPaillier2(msg.c_str(), msg.size(), 4, verticesF, verticesEncrypte);
+
+
+  /*
 
   RSA rsa2(17);
   rsa2.generate(23, 11);
@@ -62,7 +68,7 @@ int main(int argc, char** argv)
   Chiffre32 ar32 = ai32.retireMessageLSB(3);
    */
 
-
+  /*
   Paillier pailler(26);
   float a = 372.345239239f;
 
@@ -78,6 +84,7 @@ int main(int argc, char** argv)
             << "Mantisse : " << ca_m << " : " << ca_m.toUint32() << std::endl
             << "Encrypt  : " << ca_m_c << " : " << ca_m_c.toUint64() << std::endl
             << "Decrypt  : " << ca_m_c_d << " : " << ca_m_c_d.toUint32() << std::endl;
+            */
 
   return 0;
 }
