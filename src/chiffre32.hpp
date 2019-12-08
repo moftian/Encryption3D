@@ -6,23 +6,23 @@
 #include "rsa.hpp"
 
 namespace encrypt3d {
-  
-  typedef uint32_t uint32;
 
   class Chiffre32 {
   private:
     float  m_float {};
-    uint32 m_uint32 {};
+    uint32_t m_uint32 {};
 
   public:
     Chiffre32() = default;
 
     float toFloat() const { return m_float; }
-    uint32 toUint32() const { return m_uint32; }
+    uint32_t toUint32() const { return m_uint32; }
 
     static Chiffre32 fromFloat(float value);
 
-    static Chiffre32 fromUint32(uint32 value);
+    static Chiffre32 fromDouble(double value);
+
+    static Chiffre32 fromUint32(uint32_t value);
 
     Chiffre32 mantisse() const;
 
@@ -31,12 +31,15 @@ namespace encrypt3d {
     Chiffre32 encrypteMantisseRSA(int n, const RSA& rsa) const;
     Chiffre32 decrypteMantisseRSA(int n, const RSA& rsa) const;
 
-    Chiffre32 insereMessageLSB(int n, uint32 value) const;
+    Chiffre32 insereMessageLSB(int n, uint32_t value) const;
     Chiffre32 retireMessageLSB(int n) const;
 
-  private:
-    static uint32 get_n_bits_(uint32 f, int beg, int n);
-    static uint32 remplace_n_bits_(uint32 f, int beg, int n, uint32 val);
+    Chiffre32 leftShift(int n) const;
+    Chiffre32 rightShift(int n) const;
+
+  public:
+    static uint32_t getNBits(uint32_t f, int beg, int n);
+    static uint32_t replaceNBits(uint32_t f, int beg, int n, uint32_t val);
   };
 
   std::ostream& operator<<(std::ostream& os, const Chiffre32& c);

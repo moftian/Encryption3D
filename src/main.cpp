@@ -15,18 +15,35 @@ int main(int argc, char** argv)
 {
   using namespace encrypt3d;
 
-  Eigen::MatrixXd vertices;
-  Eigen::MatrixXi faces;
+  Eigen::MatrixXd V;
+  Eigen::MatrixXi F;
 
-  igl::readOBJ("../models/suzanne.obj", vertices, faces);
+  igl::readOBJ("../models/suzanne.obj", V, F);
 
-  std::string msg = "Je sais pas quoi faire.";
+  std::string message = "abcdef";
 
-  Eigen::MatrixXf verticesEncrypte(vertices.rows(), vertices.cols());
-  Eigen::MatrixXf verticesF = vertices.cast<float>();
 
-  Encryption3D::insereMsgPaillier2(msg.c_str(), msg.size(), 4, verticesF, verticesEncrypte);
+  std::cout << "Message : " << message << std::endl;
 
+  Eigen::MatrixXd encryptedV(V.rows(), V.cols());
+  Eigen::MatrixXf encryptedF = V.cast<float>();
+  Paillier paillier(26);
+  Encryption3D::insereMsgPaillier1(message, encryptedF, encryptedV, paillier);
+
+  std::string decryptedMessage;
+  Eigen::MatrixXf decryptedV(V.rows(), V.cols());
+  Encryption3D::retireMsgPaillier1(decryptedMessage, encryptedV, decryptedV, paillier);
+
+  std::cout << "DecryptedMessage : " << decryptedMessage << std::endl;
+
+  //Eigen::MatrixXd viewV = verticesEncrypte1 * 1e308;
+
+  //std::cout << viewV;
+
+  //igl::opengl::glfw::Viewer viewer;
+
+  //viewer.data().set_mesh(viewV, faces);
+  //viewer.launch(true, false, "3D encryption");
 
   /*
 
@@ -71,20 +88,60 @@ int main(int argc, char** argv)
   /*
   Paillier pailler(26);
   float a = 372.345239239f;
+  float b= 390.12354f;
 
   Chiffre32 ca = Chiffre32::fromFloat(a);
+  Chiffre32 cb = Chiffre32::fromFloat(b);
 
   Chiffre32 ca_m = ca.mantisse();
+  Chiffre32 cb_m = cb.mantisse();
 
   Chiffre64 ca_m_c = pailler.encrypte(ca_m);
+  Chiffre64 cb_m_c = pailler.encrypte(cb_m);
 
   Chiffre32 ca_m_c_d = pailler.decrypte(ca_m_c);
+  Chiffre32 cb_m_c_d = pailler.decrypte(cb_m_c);
 
-  std::cout << "Chiffre  : " << ca << " : " << ca.toFloat() << std::endl
-            << "Mantisse : " << ca_m << " : " << ca_m.toUint32() << std::endl
-            << "Encrypt  : " << ca_m_c << " : " << ca_m_c.toUint64() << std::endl
-            << "Decrypt  : " << ca_m_c_d << " : " << ca_m_c_d.toUint32() << std::endl;
-            */
+  Chiffre64 cab_m_c = pailler.multiply(ca_m_c, cb_m_c);
+
+  Chiffre32 cab_m_c_d = pailler.decrypte_(cab_m_c);
+
+  std::cout << "a           : " //<< ca << " : "
+            << ca.toFloat() << std::endl
+            << "a_M         : " //<< ca_m << " : "
+            << ca_m.toUint32() << std::endl
+            << "E(a_M)      : " //<< ca_m_c << " : "
+            << ca_m_c.toUint64() << std::endl
+            << "D(E(a_M))   : " //<< ca_m_c_d << " : "
+            << ca_m_c_d.toUint32() << std::endl
+            << "b           : "// << cb << " : "
+            << cb.toFloat() << std::endl
+            << "b_M         : " //<< cb_m << " : "
+            << cb_m.toUint32() << std::endl
+            << "E(b_M)      : " //<< ca_m_c << " : "
+            << cb_m_c.toUint64() << std::endl
+            << "D(E(b_M))   : " //<< ca_m_c_d << " : "
+            << cb_m_c_d.toUint32() << std::endl
+            << "E(a_M)E(b_M): " //<< cab_m_c << " : "
+            << cab_m_c.toUint64() << std::endl
+            << "D(E(a_M)E(b_M)): " //<< cab_m_c_d << " : "
+            << cab_m_c_d.toUint32() << std::endl
+            << "a_M + b_M : " << ca_m.toUint32() + cb_m.toUint32() << std::endl;
+
+  std::string message = "abc";
+
+  Encryption3D::BitStream bitStream = Encryption3D::convert_to_bit_stream_(message);
+
+  for (auto& e : bitStream) {
+    std::cout << (unsigned)e;
+  }
+  std::cout << std::endl;
+
+  std::cout << Chiffre32::fromUint32(Encryption3D::get_n_bits_of_message_bit_stream_(bitStream, 0, 3));
+  std::cout << Chiffre32::fromUint32(Encryption3D::get_n_bits_of_message_bit_stream_(bitStream, 3, 3));
+  std::cout << Chiffre32::fromUint32(Encryption3D::get_n_bits_of_message_bit_stream_(bitStream, 6, 3));
+  std::cout << Chiffre32::fromUint32(Encryption3D::get_n_bits_of_bit_stream_(bitStream, 9, 3));
+   */
 
   return 0;
 }

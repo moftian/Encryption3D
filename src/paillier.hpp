@@ -22,18 +22,25 @@ namespace encrypt3d {
 
     ~Paillier();
 
-    uint64_t encrypte(uint32_t m);
+    Chiffre64 encrypte(const Chiffre32 &m) const;
 
-    Chiffre64 encrypte(const Chiffre32 &m);
+    Chiffre32 decrypte(const Chiffre64 &c) const;
 
-    uint32_t decrypte(uint64_t c);
-
-    Chiffre32 decrypte(const Chiffre64 &c);
+    /// E(a) * E(b) = E(a + b)
+    /// \param a [in] first encrypted number
+    /// \param b [in] second encrypted number
+    /// \return Sum the encrypted a and b
+    Chiffre64 multiply(const Chiffre64& a, const Chiffre64& b) const;
 
   private:
     int32_t m_bits;
     paillier_prvkey_t* m_prv_key;
     paillier_pubkey_t* m_pub_key;
+
+  private:
+    uint64_t encrypte(uint32_t m) const;
+    uint32_t decrypte(uint64_t c) const;
+    uint64_t multiply(uint64_t a, uint64_t b) const;
   };
 
 }
