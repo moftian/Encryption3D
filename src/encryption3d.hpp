@@ -39,11 +39,12 @@ namespace encrypt3d {
     /**
      *
      * @param msg
+     * @param len    [in] on bytes
      * @param inMesh
      * @param outMesh
      * @param paillier
      */
-    static void retireMsgPaillier1(std::string& msg, const Eigen::MatrixXd& inMesh, Eigen::MatrixXf& outMesh, const Paillier& paillier);
+    static void retireMsgPaillier1(std::string& msg, int len, const Eigen::MatrixXd& inMesh, Eigen::MatrixXf& outMesh, const Paillier& paillier);
 
     /**
      *
@@ -85,6 +86,8 @@ namespace encrypt3d {
 
     static void dump_n_bits_to_bit_stream_(BitStream& bitStream, uint32_t bits, int pos, int n);
   };
+
+  std::ostream& operator<<(std::ostream& os, const Encryption3D::BitStream& bitStream);
 
 }
 

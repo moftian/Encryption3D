@@ -22,9 +22,8 @@ namespace encrypt3d {
   Chiffre32 Chiffre32::fromDouble(double value)
   {
     Chiffre32 c;
-    auto v = static_cast<float>(value);
-    c.m_uint32 = v;
-    c.m_float = *reinterpret_cast<float*>(&v);
+    c.m_float = *reinterpret_cast<float*>(&value);
+    c.m_uint32 = *reinterpret_cast<uint32_t*>(&c.m_float);
     return c;
   }
 

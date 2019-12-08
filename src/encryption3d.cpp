@@ -81,7 +81,7 @@ namespace encrypt3d {
     }
   }
 
-  void Encryption3D::retireMsgPaillier1(std::string& msg, const Eigen::MatrixXd& inMesh, Eigen::MatrixXf& outMesh, const Paillier& paillier)
+  void Encryption3D::retireMsgPaillier1(std::string& msg, int len, const Eigen::MatrixXd& inMesh, Eigen::MatrixXf& outMesh, const Paillier& paillier)
   {
     auto coords = inMesh.array();
     auto out = outMesh.array();
@@ -93,16 +93,21 @@ namespace encrypt3d {
       Chiffre64 mantisse = f.mantisse();
       DecryptionData data = decrypte_(f.mantisse(), paillier);
 
-      if (data.message.toUint32() != 0) {
+      //static int j = 0;
+      if (bitStream.size() < len * 8) {
+        //std::cout << j++ << std::endl;
         dump_n_bits_to_bit_stream_(bitStream, data.message.toUint32(), 29, 3);
       }
 
-      Chiffre32 d = Chiffre32::fromDouble(coords(i));
+      //Chiffre32 d = Chiffre32::fromDouble(coords(i));
+      Chiffre32 d = Chiffre32::fromFloat((float)coords(i));
 
       out(i) = d.remplaceMantisse(data.mantisse).toFloat();
     }
 
     outMesh = out;
+
+    std::cout << "bit stream: " << bitStream;
 
     msg = bit_stream_to_string_(bitStream);
   }
@@ -135,7 +140,14 @@ namespace encrypt3d {
     Chiffre32 d_c = paillier.decrypte(c);
     DecryptionData data;
     data.mantisse = d_c.rightShift(3);
-    data.message = Chiffre32::fromUint32(Chiffre32::getNBits(d_c.toUint32(), 23, 3));
+    data.message = Chiffre32::fromUint32(Chiffre32::getNBits(d_c.toUint32(), 29, 3));
+    /*
+    std::cout << "encrypted : " << c
+              << "decrypted : " << d_c
+              << "decrypted mantisse : " << data.mantisse
+              << "decrypted message  : " << data.message;
+              */
+
     return data;
   }
 
@@ -179,6 +191,15 @@ namespace encrypt3d {
     for (int i = 0; i < n; ++i) {
       bitStream.push_back(((bits << (pos+i)) & 0x80000000) >> 31);
     }
+  }
+
+  std::ostream& operator<<(std::ostream& os, const Encryption3D::BitStream& bitStream)
+  {
+    for (const auto& e : bitStream) {
+      os << (unsigned)e;
+    }
+    os << std::endl;
+    return os;
   }
 
 }
