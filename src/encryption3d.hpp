@@ -24,7 +24,7 @@ namespace encrypt3d {
      * @param inMesh  [in]
      * @param outMesh [out]
      */
-    static void insereMsgRSA(const char *msg, int len, const Eigen::MatrixXf &inMesh, Eigen::MatrixXf &outMesh);
+    static void insereMsgRSA(const std::string& msg, int bpf, const Eigen::MatrixXf &inMesh, Eigen::MatrixXf &outMesh, const RSA& rsa);
 
     /**
      *
@@ -34,7 +34,7 @@ namespace encrypt3d {
      * @param outMesh
      * @param paillier
      */
-    static void insereMsgPaillier1(const std::string& msg, int bpf, const Eigen::MatrixXf &inMesh, Eigen::MatrixXd &outMesh, const Paillier& paillier);
+    static void insereMsgPaillier(const std::string& msg, int bpf, const Eigen::MatrixXf &inMesh, Eigen::MatrixXd &outMesh, const Paillier& paillier);
 
     /**
      *
@@ -44,17 +44,7 @@ namespace encrypt3d {
      * @param outMesh
      * @param paillier
      */
-    static void retireMsgPaillier1(std::string& msg, int len, int bpf, const Eigen::MatrixXd& inMesh, Eigen::MatrixXf& outMesh, const Paillier& paillier);
-
-    /**
-     *
-     * @param msg
-     * @param len
-     * @param blockSize
-     * @param inMesh
-     * @param outMesh
-     */
-    static void insereMsgPaillier2(const std::string& msg, int blockSize, const Eigen::MatrixXf &inMesh, Eigen::MatrixXf &outMesh);
+    static void retireMsgPaillier(std::string& msg, int len, int bpf, const Eigen::MatrixXd& inMesh, Eigen::MatrixXf& outMesh, const Paillier& paillier);
 
     /**
      * Decrypter un chiffre de 64 bits(sans signe et exposant) a deux parties (23bits + 3bits)

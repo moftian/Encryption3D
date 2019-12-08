@@ -14,8 +14,8 @@ option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 add_subdirectory(external/libigl)
 
 set(SrcFiles
-        external/paillier/paillier.c
-        external/paillier/paillier.h
+		external/paillier/paillier.c
+		external/paillier/paillier.h
         src/main.cpp
         src/chiffre32.cpp
         src/chiffre32.hpp
@@ -23,11 +23,12 @@ set(SrcFiles
         src/rsa.cpp
         src/paillier.cpp
         src/paillier.hpp 
-	src/chiffre64.cpp 
-	src/chiffre64.hpp 
-	src/encryption3d.hpp 
-	src/encryption3d.cpp 
-	src/encryption3d.hpp)
+		src/chiffre64.cpp
+		src/chiffre64.hpp
+		src/encryption3d.hpp
+		src/encryption3d.cpp
+		src/encryption3d.hpp
+		src/test.cpp)
 
 add_executable(MiniProjet ${SrcFiles})
 

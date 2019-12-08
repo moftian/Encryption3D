@@ -4,52 +4,12 @@
 
 namespace encrypt3d {
 
-  void Encryption3D::insereMsgPaillier2(const std::string& msg, int blockSize, const Eigen::MatrixXf& inMesh, Eigen::MatrixXf& outMesh)
-  {
-    /*
-    if (len <= 0 || msg == nullptr || blockSize <= 0)
-      return;
-
-    //Eigen::Map<Eigen::VectorXf> coords(inMesh.data(), inMesh.);;
-
-    auto coords = inMesh.array();
-
-    int msg_len_bits = len * 8;
-
-    std::cout << "Mesh vertices num : " << inMesh.rows() << std::endl;
-    std::cout << "Mesh float num : " << coords.array().size() << std::endl;
-    std::cout << "Message bits : " << msg_len_bits << std::endl;
-
-    // Combien de bits a inserer dans un chiffre flottant
-    int k = 0;
-    for (k = 1; k < sizeof(float);) {
-      if (msg_len_bits / k > coords.size())
-        k++;
-      else
-        break;
-    }
-
-    std::cout << k << " bits de message per float.\n";
-
-    // reorganiser les float en blocs
-    for (int i = 0; i < coords.size(); i += blockSize) {
-      if (i * blockSize <= msg_len_bits) {
-        std::vector<Chiffre32> block(blockSize);
-        for (int j = 0; j < blockSize; ++j) {
-          block[j] = Chiffre32::fromFloat(coords(i + j)).mantisse();
-        }
-      }
-      break;
-    }
-     */
-  }
-
-  void Encryption3D::insereMsgPaillier1(const std::string& msg, int bpf, const Eigen::MatrixXf& inMesh, Eigen::MatrixXd& outMesh, const Paillier& paillier)
+  void Encryption3D::insereMsgPaillier(const std::string& msg, int bpf, const Eigen::MatrixXf& inMesh, Eigen::MatrixXd& outMesh, const Paillier& paillier)
   {
     uint32_t msg_len_bits = msg.size() * sizeof(char) * 8;
 
     std::cout << "Message bits   : " << msg_len_bits << std::endl;
-    std::cout << "Available bits : " << inMesh.rows() * 3 * 3 << std::endl;
+    std::cout << "Available bits : " << inMesh.rows() * 3 * 2 << std::endl;
 
     if (msg_len_bits > inMesh.rows() * 3 * bpf) {
       std::cout << "Message is too long to insert!\n";
@@ -60,21 +20,20 @@ namespace encrypt3d {
     outMesh = inMesh.cast<double>();
     auto encrypted_floats = outMesh.array();
 
-    // Message char* to bit stream
     BitStream msg_bits = string_to_bit_stream_(msg);
 
-    for (const auto& e : msg) {
-      std::cout << std::bitset<8>(e) << " ";
-    }
-    std::cout << "\nMessage bit stream : " << msg_bits << std::endl;
+    //for (const auto& e : msg) {
+    //  std::cout << std::bitset<8>(e) << " ";
+    //}
+    //std::cout << "\nMessage bit stream : " << msg_bits << std::endl;
 
-    // Chaque float insere 3 bit
+    // Chaque float insere bpf bit
     for (int i = 0; i < coords.size(); ++i) {
       Chiffre32 f = Chiffre32::fromFloat(coords(i));
       Chiffre32 mantisse = f.mantisse();
       Chiffre32 message;
 
-      if ((i+1) * 3 > msg_bits.size()) {
+      if ((i+1) * bpf > msg_bits.size()) {
 
         message = Chiffre32::fromUint32(0);
 
@@ -98,12 +57,14 @@ namespace encrypt3d {
     }
   }
 
-  void Encryption3D::retireMsgPaillier1(std::string& msg, int len, int bpf, const Eigen::MatrixXd& inMesh, Eigen::MatrixXf& outMesh, const Paillier& paillier)
+  void Encryption3D::retireMsgPaillier(std::string& msg, int len, int bpf, const Eigen::MatrixXd& inMesh, Eigen::MatrixXf& outMesh, const Paillier& paillier)
   {
     auto coords = inMesh.array();
     auto out = outMesh.array();
 
     BitStream bitStream;
+
+    //std::cout << "Retire " << len * 8 << "bits" << std::endl;
 
     for (int i = 0; i < coords.size(); ++i) {
       Chiffre64 f = Chiffre64::fromDouble(coords(i));
@@ -127,7 +88,7 @@ namespace encrypt3d {
 
     outMesh = out;
 
-    std::cout << "Final bit stream: " << bitStream << std::endl;
+    //std::cout << "Final bit stream   : " << bitStream << std::endl;
 
     msg = bit_stream_to_string_(bitStream);
   }
@@ -212,6 +173,42 @@ namespace encrypt3d {
 
     for (int i = 0; i < n; ++i) {
       bitStream.push_back(((bits << (pos+i)) & 0x80000000) >> 31);
+    }
+  }
+
+  void Encryption3D::insereMsgRSA(const std::string& msg, int bpf, const Eigen::MatrixXf &inMesh, Eigen::MatrixXf &outMesh, const RSA& rsa)
+  {
+    uint32_t msg_len_bits = msg.size() * sizeof(char) * 8;
+
+    if (msg_len_bits > inMesh.rows() * 3 * bpf) {
+      std::cout << "Message is too long to insert!\n";
+      exit(-1);
+    }
+
+    auto coords = inMesh.array();
+    outMesh = inMesh;
+    auto encrypted_floats = outMesh.array();
+
+    BitStream msg_bits = string_to_bit_stream_(msg);
+
+    for (int i = 0; i < coords.size(); ++i) {
+      Chiffre32 f = Chiffre32::fromFloat(coords(i));
+      Chiffre32 message;
+
+      if ((i+1) * bpf > msg_bits.size()) {
+
+        message = Chiffre32::fromUint32(0);
+
+      } else {
+
+        message = Chiffre32::fromUint32(get_n_bits_of_bit_stream_(msg_bits, i * bpf, bpf));
+
+      }
+
+      Chiffre32 chiffre = f.encrypteMantisseRSA(21, rsa);
+      chiffre.insereMessageLSB(bpf, message.toUint32());
+
+      encrypted_floats(i) = chiffre.toFloat();
     }
   }
 
