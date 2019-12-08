@@ -22,7 +22,12 @@ set(SrcFiles
         src/rsa.hpp
         src/rsa.cpp
         src/paillier.cpp
-        src/paillier.hpp src/chiffre64.cpp src/chiffre64.hpp src/encryption3d.hpp src/encryption3d.cpp src/encryption3d.hpp)
+        src/paillier.hpp 
+	src/chiffre64.cpp 
+	src/chiffre64.hpp 
+	src/encryption3d.hpp 
+	src/encryption3d.cpp 
+	src/encryption3d.hpp)
 
 add_executable(MiniProjet ${SrcFiles})
 
