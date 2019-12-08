@@ -33,4 +33,4 @@ add_executable(MiniProjet ${SrcFiles})
 
 target_include_directories(MiniProjet PRIVATE ./external)
 
-target_link_libraries(MiniProjet igl::core igl::opengl_glfw gmp)
+target_link_libraries(MiniProjet igl::core igl::opengl_glfw igl::opengl_glfw_imgui gmp)

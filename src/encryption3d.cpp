@@ -44,13 +44,16 @@ namespace encrypt3d {
      */
   }
 
-  void Encryption3D::insereMsgPaillier1(const std::string& msg, const Eigen::MatrixXf& inMesh, Eigen::MatrixXd& outMesh, const Paillier& paillier)
+  void Encryption3D::insereMsgPaillier1(const std::string& msg, int bpf, const Eigen::MatrixXf& inMesh, Eigen::MatrixXd& outMesh, const Paillier& paillier)
   {
-    uint32_t msg_len_bits = msg.size() * 8;
+    uint32_t msg_len_bits = msg.size() * sizeof(char) * 8;
 
-    if (msg_len_bits > inMesh.rows() * 3 * 3) {
+    std::cout << "Message bits   : " << msg_len_bits << std::endl;
+    std::cout << "Available bits : " << inMesh.rows() * 3 * 3 << std::endl;
+
+    if (msg_len_bits > inMesh.rows() * 3 * bpf) {
       std::cout << "Message is too long to insert!\n";
-      return;
+      exit(-1);
     }
 
     auto coords = inMesh.array();
@@ -59,6 +62,11 @@ namespace encrypt3d {
 
     // Message char* to bit stream
     BitStream msg_bits = string_to_bit_stream_(msg);
+
+    for (const auto& e : msg) {
+      std::cout << std::bitset<8>(e) << " ";
+    }
+    std::cout << "\nMessage bit stream : " << msg_bits << std::endl;
 
     // Chaque float insere 3 bit
     for (int i = 0; i < coords.size(); ++i) {
@@ -72,16 +80,25 @@ namespace encrypt3d {
 
       } else {
 
-        message = Chiffre32::fromUint32(get_n_bits_of_bit_stream_(msg_bits, i * 3, 3));
+        message = Chiffre32::fromUint32(get_n_bits_of_bit_stream_(msg_bits, i * bpf, bpf));
 
       }
 
-      Chiffre64 e = encrypte_(mantisse, message, paillier);
+      Chiffre64 e = encrypte_(mantisse, message, bpf, paillier);
+
       encrypted_floats(i) = Chiffre64::fromChiffre32(f).remplaceMantisse(e).toDouble();
+
+      /*
+      std::cout << "Float          : " << f << " = " << f.toFloat() << std::endl;
+      std::cout << "Encrypt mantisse " << mantisse << " & message " << message << std::endl;
+      std::cout << "Encrypt result : " << Chiffre64::fromChiffre32(f).remplaceMantisse(e) << " = "
+                << Chiffre64::fromChiffre32(f).remplaceMantisse(e).toDouble()
+                << "         saved : " << encrypted_floats(i) << std::endl;
+      */
     }
   }
 
-  void Encryption3D::retireMsgPaillier1(std::string& msg, int len, const Eigen::MatrixXd& inMesh, Eigen::MatrixXf& outMesh, const Paillier& paillier)
+  void Encryption3D::retireMsgPaillier1(std::string& msg, int len, int bpf, const Eigen::MatrixXd& inMesh, Eigen::MatrixXf& outMesh, const Paillier& paillier)
   {
     auto coords = inMesh.array();
     auto out = outMesh.array();
@@ -90,63 +107,68 @@ namespace encrypt3d {
 
     for (int i = 0; i < coords.size(); ++i) {
       Chiffre64 f = Chiffre64::fromDouble(coords(i));
-      Chiffre64 mantisse = f.mantisse();
-      DecryptionData data = decrypte_(f.mantisse(), paillier);
 
-      //static int j = 0;
+      DecryptionData data = decrypte_(f.mantisse(), bpf, paillier);
+
       if (bitStream.size() < len * 8) {
-        //std::cout << j++ << std::endl;
-        dump_n_bits_to_bit_stream_(bitStream, data.message.toUint32(), 29, 3);
+        dump_n_bits_to_bit_stream_(bitStream, data.message.toUint32(), 32-bpf, bpf);
       }
 
-      //Chiffre32 d = Chiffre32::fromDouble(coords(i));
-      Chiffre32 d = Chiffre32::fromFloat((float)coords(i));
+      out(i) = Chiffre32::fromDouble(coords(i)).remplaceMantisse(data.mantisse).toFloat();
 
-      out(i) = d.remplaceMantisse(data.mantisse).toFloat();
+      //std::cout << "Current bit stream : " << bitStream << std::endl;
+      /*
+      std::cout << "Decrypt from double : " << f << " = " << f.toDouble() << std::endl;
+      std::cout << "Decrypt result : " << Chiffre32::fromDouble(coords(i)).remplaceMantisse(data.mantisse) << " = "
+                << Chiffre32::fromDouble(coords(i)).remplaceMantisse(data.mantisse).toFloat()
+                << "         saved : " << out(i) << std::endl
+      */
     }
 
     outMesh = out;
 
-    std::cout << "bit stream: " << bitStream;
+    std::cout << "Final bit stream: " << bitStream << std::endl;
 
     msg = bit_stream_to_string_(bitStream);
   }
 
   Chiffre64 Encryption3D::encrypte_(const encrypt3d::Chiffre32& mantisse,
                                     const encrypt3d::Chiffre32& message,
+                                    int bpf,
                                     const encrypt3d::Paillier& paillier)
   {
     // left shift la mantisse
-    Chiffre32 mantisee_ = mantisse.leftShift(3);
+    Chiffre32 mantisee_ = mantisse.leftShift(bpf);
     Chiffre64 e_mantisse = paillier.encrypte(mantisee_);
     Chiffre64 e_message  = paillier.encrypte(message);
 
     /*
     Chiffre64 t = paillier.multiply(e_mantisse, e_message);
-    Chiffre32 dt = paillier.decrypte_(t);
-    std::cout << " (man): " << mantisee_
-              << "E(man): " << e_mantisse
-              << " (msg): " << message
-              << "E(msg): " << e_message
-              << "E(mm) : " << t
-              << "D(mm) : " << d;1
-              */
+    Chiffre32 dt = paillier.decrypte(t);
+    std::cout << "Mantisse  [in] : " << mantisse << std::endl
+              << "Mantisse_      : " << mantisee_ << std::endl
+              << "Message   [in] : " << message << std::endl
+              << "E(Mantisse_)   : " << e_mantisse << std::endl
+              << "E(Message)     : " << e_message << std::endl
+              << "E(M_M)         : " << t << std::endl
+              << "D(E(M_M))      : " << dt << std::endl << std::endl;
+    */
 
     return paillier.multiply(e_mantisse, e_message);
   }
 
-  Encryption3D::DecryptionData Encryption3D::decrypte_(const encrypt3d::Chiffre64 &c, const encrypt3d::Paillier &paillier)
+  Encryption3D::DecryptionData Encryption3D::decrypte_(const encrypt3d::Chiffre64 &c, int bpf, const encrypt3d::Paillier &paillier)
   {
     Chiffre32 d_c = paillier.decrypte(c);
     DecryptionData data;
-    data.mantisse = d_c.rightShift(3);
-    data.message = Chiffre32::fromUint32(Chiffre32::getNBits(d_c.toUint32(), 29, 3));
+    data.mantisse = d_c.rightShift(bpf);
+    data.message = Chiffre32::fromUint32(Chiffre32::getNBits(d_c.toUint32(), 32-bpf, bpf));
+
     /*
-    std::cout << "encrypted : " << c
-              << "decrypted : " << d_c
-              << "decrypted mantisse : " << data.mantisse
-              << "decrypted message  : " << data.message;
-              */
+    std::cout << "Decrypted : " << d_c << std::endl
+              << "Decrypted Mantisse  : " << data.mantisse << std::endl
+              << "Decrypted Message  : "  << std::bitset<8>(data.message.toUint32()) << std::endl;
+    */
 
     return data;
   }

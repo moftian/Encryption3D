@@ -1,9 +1,9 @@
 #ifndef MINIPROJET_CHIFFRE64_HPP
 #define MINIPROJET_CHIFFRE64_HPP
 
-#include "chiffre32.hpp"
-
 namespace encrypt3d {
+
+  class Chiffre32;
 
   class Chiffre64 {
   private:

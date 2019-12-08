@@ -28,13 +28,13 @@ namespace encrypt3d {
 
     /**
      *
-     * @param msg      [in]
-     * @param len      [in]
-     * @param inMesh   [in]
-     * @param outMesh  [out]
-     * @param paillier [in]
+     * @param msg
+     * @param bpf
+     * @param inMesh
+     * @param outMesh
+     * @param paillier
      */
-    static void insereMsgPaillier1(const std::string& msg, const Eigen::MatrixXf &inMesh, Eigen::MatrixXd &outMesh, const Paillier& paillier);
+    static void insereMsgPaillier1(const std::string& msg, int bpf, const Eigen::MatrixXf &inMesh, Eigen::MatrixXd &outMesh, const Paillier& paillier);
 
     /**
      *
@@ -44,7 +44,7 @@ namespace encrypt3d {
      * @param outMesh
      * @param paillier
      */
-    static void retireMsgPaillier1(std::string& msg, int len, const Eigen::MatrixXd& inMesh, Eigen::MatrixXf& outMesh, const Paillier& paillier);
+    static void retireMsgPaillier1(std::string& msg, int len, int bpf, const Eigen::MatrixXd& inMesh, Eigen::MatrixXf& outMesh, const Paillier& paillier);
 
     /**
      *
@@ -57,12 +57,12 @@ namespace encrypt3d {
     static void insereMsgPaillier2(const std::string& msg, int blockSize, const Eigen::MatrixXf &inMesh, Eigen::MatrixXf &outMesh);
 
     /**
-     * Decrypter un chiffre de 64 bits a deux parties (23bits + 3bits)
+     * Decrypter un chiffre de 64 bits(sans signe et exposant) a deux parties (23bits + 3bits)
      * @param c        [in]
      * @param paillier [in]
      * @return DecryptionData contains a 23 bits mantisse and a 3 bits message
      */
-    static DecryptionData decrypte_(const Chiffre64& c, const Paillier& paillier);
+    static DecryptionData decrypte_(const Chiffre64& c, int bpf, const Paillier& paillier);
 
     /**
      * Chiffrer la mantisse (23 bits) and le message (3 bits) ensemble.
@@ -71,7 +71,7 @@ namespace encrypt3d {
      * @param paillier [in]
      * @return E(mantisse) * E(message) = E(mantisse + message)
      */
-    static Chiffre64 encrypte_(const Chiffre32& mantisse, const Chiffre32& message, const Paillier& paillier);
+    static Chiffre64 encrypte_(const Chiffre32& mantisse, const Chiffre32& message, int bpf, const Paillier& paillier);
 
     /**
      * Convertir un message de string en bits.

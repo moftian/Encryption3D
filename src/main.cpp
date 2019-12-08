@@ -1,6 +1,9 @@
 #include <igl/readOFF.h>
 #include <igl/readOBJ.h>
 #include <igl/opengl/glfw/Viewer.h>
+#include <sstream>
+#include <libigl/include/igl/opengl/glfw/imgui/ImGuiMenu.h>
+#include <libigl/external/imgui/imgui.h>
 
 #include "encryption3d.hpp"
 #include "chiffre32.hpp"
@@ -11,30 +14,62 @@
   #error The following Programm only supports float operations using the IEEE 754 Standard.
 #endif
 
+bool key_down(igl::opengl::glfw::Viewer& viewer, unsigned char key, int modifiers);
+void menu_callback();
+
+Eigen::MatrixXd viewV;
+Eigen::MatrixXd V;
+Eigen::MatrixXi F;
+Eigen::MatrixXd encryptedV;
+Eigen::MatrixXf decryptedV;
+
+igl::opengl::glfw::imgui::ImGuiMenu menu;
+igl::opengl::glfw::Viewer viewer;
+bool showLabel = false;
+
 int main(int argc, char** argv)
 {
   using namespace encrypt3d;
 
-  Eigen::MatrixXd V;
-  Eigen::MatrixXi F;
+  // bits per float
+  int bpf = 2;
 
-  igl::readOBJ("../models/suzanne.obj", V, F);
+  if (argc < 2) {
+    std::cout << "MiniProjet <model.obj>\n";
+  }
 
-  std::string message = "asdffe0t3-4t345df";
+  Paillier paillier(26);
 
+  std::string path(argv[1]);
+
+  std::string ext = path.substr(path.find_last_of('.') + 1, 3);
+  if (ext == "obj") {
+    igl::readOBJ(path, V, F);
+
+  } else if (ext == "off") {
+
+    igl::readOFF(path, V, F);
+
+  } else {
+    std::cout << "Cannot read file." << std::endl;
+    exit(-1);
+  }
+
+  viewV = V;
+
+  std::string message = "1234";
 
   std::cout << "Message : " << message << std::endl;
 
-  Eigen::MatrixXd encryptedV(V.rows(), V.cols());
+  encryptedV = Eigen::MatrixXd(V.rows(), V.cols());
 
-  Eigen::MatrixXf encryptedF = V.cast<float>();
+  Eigen::MatrixXf Vf = V.cast<float>();
 
-  Paillier paillier(26);
-  Encryption3D::insereMsgPaillier1(message, encryptedF, encryptedV, paillier);
+  Encryption3D::insereMsgPaillier1(message, bpf, Vf, encryptedV, paillier);
 
   std::string decryptedMessage;
-  Eigen::MatrixXf decryptedV(V.rows(), V.cols());
-  Encryption3D::retireMsgPaillier1(decryptedMessage, message.size(), encryptedV, decryptedV, paillier);
+  decryptedV = Eigen::MatrixXf(V.rows(), V.cols());
+  Encryption3D::retireMsgPaillier1(decryptedMessage, message.size(), bpf, encryptedV, decryptedV, paillier);
 
   std::cout << "DecryptedMessage : " << decryptedMessage << std::endl;
 
@@ -55,18 +90,25 @@ int main(int argc, char** argv)
   }
    */
 
-  Eigen::MatrixXd viewV;
+  //viewV = V;
+  //viewV = encryptedV;
+  //viewV = decryptedV.cast<double>();
 
-  //viewV = encryptedF.cast<double>();
-  //viewV = encryptedV * 1e308;
-  viewV = decryptedV.cast<double>() * 1e38;
+  viewer.callback_key_down = &key_down;
 
-  //std::cout << viewV;
+  menu.callback_draw_viewer_window = &menu_callback;
 
-  igl::opengl::glfw::Viewer viewer;
+  viewer.plugins.push_back(&menu);
 
   viewer.data().set_mesh(viewV, F);
+  viewer.data().set_face_based(true);
   viewer.launch(true, false, "3D Encryption");
+
+  Chiffre32 c = Chiffre32::fromUint32(67108728);
+  std::cout << c << std::endl;
+  std::cout << paillier.encrypte(c) << std::endl;
+  std::cout << paillier.decrypte(paillier.encrypte(c)) << std::endl;
+
 
   /*
 
@@ -107,12 +149,10 @@ int main(int argc, char** argv)
   Chiffre32 ai32 = ac32.insereMessageLSB(3, 7);
   Chiffre32 ar32 = ai32.retireMessageLSB(3);
    */
-
-  /*
-  Paillier pailler(26);
   float a = 372.345239239f;
   float b= 390.12354f;
 
+  /*
   Chiffre32 ca = Chiffre32::fromFloat(a);
   Chiffre32 cb = Chiffre32::fromFloat(b);
 
@@ -150,9 +190,10 @@ int main(int argc, char** argv)
             << "D(E(a_M)E(b_M)): " //<< cab_m_c_d << " : "
             << cab_m_c_d.toUint32() << std::endl
             << "a_M + b_M : " << ca_m.toUint32() + cb_m.toUint32() << std::endl;
+            */
 
-  std::string msg = "abc";
-
+  /*
+  std::cout << "-----------------------" << std::endl;
   Encryption3D::BitStream bitStream = Encryption3D::string_to_bit_stream_(message);
 
   for (auto& e : bitStream) {
@@ -160,18 +201,144 @@ int main(int argc, char** argv)
   }
   std::cout << std::endl;
 
-  std::cout << "_----------------------" << std::endl;
-  Chiffre32 f = Chiffre32::fromFloat(4299342342.234528896f);
+  std::cout << "-----------------------" << std::endl;
+  float number = 4299342342.234528896f;
+  auto numberd = static_cast<double>(number);
+  auto numberdf = static_cast<float>(numberd);
+  Chiffre32 f = Chiffre32::fromFloat(number);
+  Chiffre64 d = Chiffre64::fromDouble(numberd);
+  uint64_t ud = d.toUint64();
+   */
+  /*
+  std::cout << "Number                   : " << number << std::endl
+            << "                         : " << f
+            << "Float2Double             : " << numberd << std::endl
+            << "                         : " << std::bitset<64>(*reinterpret_cast<uint64_t*>(&numberd)) << std::endl
+            << "Double2Float             : " << (float)(double)number << std::endl
+            << "                         : " << std::bitset<32>(*reinterpret_cast<uint32_t*>(&numberdf)) << std::endl
+            << "Chiffre64::fromFloat     : " << Chiffre64::fromFloat(number)
+            << "                         : " << Chiffre64::fromFloat(number).toDouble() << std::endl
+            << "Chiffre64::fromDouble    : " << Chiffre64::fromDouble((double)number)
+            << "                         : " << Chiffre64::fromDouble((double)number).toDouble() << std::endl
+            << "f.toUint32               : " << f
+            << "Chiffre64::fromUint32    : " << Chiffre64::fromUint32(f.toUint32())
+            << "                         : " << Chiffre64::fromUint32(f.toUint32()).toDouble() << std::endl
+            << "Chiffre64::fromUint64    : " << Chiffre64::fromUint32((uint64_t)f.toUint32())
+            << "                         : " << Chiffre64::fromUint32((uint64_t)f.toUint32()).toDouble() << std::endl
+            << "Chiffre64::fromChiffre32 : " << Chiffre64::fromChiffre32(f)
+            << "                         : " << Chiffre64::fromChiffre32(f).toDouble() << std::endl
+            << "Chiffre32::fromDouble    : " << Chiffre32::fromDouble(numberd)
+            << "                         : " << Chiffre32::fromDouble(numberd).toFloat() << std::endl
+            << "Chiffre32::fromChiffre64 : " << Chiffre32::fromChiffre64(d)
+            << "                         : " << Chiffre32::fromChiffre64(d).toFloat() << std::endl;
+            //<< "Chiffre32::fromUint64    : " << Chiffre32::fromUint64(ud)
+            //<< "                         : " << Chiffre32::fromUint64(ud).toFloat() << std::endl;
+            */
 
-  Chiffre64 e = Encryption3D::encrypte_(f.mantisse(), Chiffre32::fromUint32(7), paillier);
-  Encryption3D::DecryptionData data = Encryption3D::decrypte_(e, paillier);
+  /*
+  Chiffre64 e_m = Encryption3D::encrypte_(f.mantisse(), Chiffre32::fromUint32(7), paillier);
+  Chiffre64 e = Chiffre64::fromChiffre32(f).remplaceMantisse(e_m);
+  Encryption3D::DecryptionData data = Encryption3D::decrypte_(e.mantisse(), paillier);
 
-  std::cout << f
-            << Chiffre64::fromChiffre32(f)
-            << e
-            << data.mantisse
-            << data.message;
-              */
+  std::cout << "f         : " << f
+            << "          : " << f.toFloat() << std::endl
+            << "          : " << Chiffre64::fromChiffre32(f)
+            << "E(m+m)    : " << e_m
+            << "E(f(m+m)) : " << e
+            << "          : " << e.toDouble() << std::endl
+            << "D(man)    : " << data.mantisse
+            << "D(msg)    : " << data.message
+            << "D(E(f)    : " << Chiffre32::fromDouble(e.toDouble()).remplaceMantisse(data.mantisse)
+            << "          : " << Chiffre32::fromDouble(e.toDouble()).remplaceMantisse(data.mantisse).toFloat();
+  */
 
   return 0;
+}
+
+bool key_down(igl::opengl::glfw::Viewer& viewer, unsigned char key, int modifiers)
+{
+  if (key == '1') {
+
+    viewV = V;
+
+  } else if (key == '2') {
+
+    viewV = encryptedV;
+
+  } else if (key == '3') {
+
+    viewV = decryptedV.cast<double>();
+
+  } else if (key == 's' || key == 'S') {
+
+    showLabel = !showLabel;
+
+  }
+
+  viewer.data().clear();
+  viewer.data().set_mesh(viewV, F);
+
+  viewer.core().align_camera_center(V, F);
+
+  if (showLabel) {
+    for (int i = 0; i < viewV.rows(); ++i) {
+      std::stringstream s;
+      Eigen::VectorXd p = viewV.row(i);
+      s << p(0) << ", " << p(1) << ", " << p(2);
+      viewer.data().add_label(p, s.str());
+    }
+  } else {
+    viewer.data().clear_labels();
+  }
+
+  viewer.data().set_face_based(true);
+
+  //std::cout << viewV << std::endl << std::endl;
+
+  return true;
+}
+
+void menu_callback()
+{
+  // Define next window position + size
+  ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiSetCond_FirstUseEver);
+  ImGui::SetNextWindowSize(ImVec2(200, 360), ImGuiSetCond_FirstUseEver);
+  ImGui::Begin("Parameters", nullptr,ImGuiWindowFlags_NoSavedSettings);
+
+  // Expose the same variable directly ...
+  static double doubleVariable;
+  ImGui::PushItemWidth(-80);
+  ImGui::DragScalar("double", ImGuiDataType_Double, &doubleVariable, 0.1, 0, 0, "%.4f");
+  ImGui::PopItemWidth();
+
+    static float floatVariable;
+    // Expose variable directly ...
+    ImGui::InputFloat("float", &floatVariable, 0, 0, 3);
+
+    if (ImGui::Checkbox("Show Label ?", &showLabel))
+    {
+      if (showLabel) {
+        for (int i = 0; i < viewV.rows(); ++i) {
+          std::stringstream s;
+          Eigen::VectorXd p = viewV.row(i);
+          s << p(0) << ", " << p(1) << ", " << p(2);
+          viewer.data().add_label(p, s.str());
+        }
+      } else {
+        viewer.data().clear_labels();
+      }
+    }
+
+    // Expose an enumeration type
+    enum Orientation { Up=0, Down, Left, Right };
+    static Orientation dir = Up;
+    ImGui::Combo("Direction", (int *)(&dir), "Up\0Down\0Left\0Right\0\0");
+
+    // Add a button
+    if (ImGui::Button("Print Hello", ImVec2(-1,0)))
+    {
+      std::cout << "Hello\n";
+    }
+
+  ImGui::End();
 }

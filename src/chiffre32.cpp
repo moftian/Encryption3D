@@ -1,5 +1,6 @@
 #include <iostream>
 #include "chiffre32.hpp"
+#include "chiffre64.hpp"
 
 namespace encrypt3d {
 
@@ -19,10 +20,20 @@ namespace encrypt3d {
     return c;
   }
 
+  Chiffre32 Chiffre32::fromUint64(uint64_t value)
+  {
+    return fromDouble(*reinterpret_cast<double*>(value));
+  }
+
+  Chiffre32 Chiffre32::fromChiffre64(const Chiffre64& value)
+  {
+    return fromDouble(value.toDouble());
+  }
+
   Chiffre32 Chiffre32::fromDouble(double value)
   {
     Chiffre32 c;
-    c.m_float = *reinterpret_cast<float*>(&value);
+    c.m_float = static_cast<float>(value);
     c.m_uint32 = *reinterpret_cast<uint32_t*>(&c.m_float);
     return c;
   }
@@ -113,7 +124,7 @@ namespace encrypt3d {
 
   std::ostream& operator<<(std::ostream& os, const Chiffre32& c)
   {
-    os << std::bitset<32>(c.toUint32()) << std::endl;
+    os << std::bitset<32>(c.toUint32());
     return os;
   }
 }

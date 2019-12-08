@@ -1,5 +1,6 @@
 #include <iostream>
 #include "chiffre64.hpp"
+#include "chiffre32.hpp"
 
 namespace encrypt3d {
 
@@ -13,10 +14,7 @@ namespace encrypt3d {
 
   Chiffre64 Chiffre64::fromUint32(uint32_t value)
   {
-    Chiffre64 c;
-    c.m_uint64 = static_cast<uint64_t>(value);
-    c.m_double = *reinterpret_cast<double*>(&c.m_uint64);
-    return c;
+    return fromFloat(*reinterpret_cast<float*>(&value));
   }
 
   Chiffre64 Chiffre64::fromUint64(uint64_t value)
@@ -37,7 +35,7 @@ namespace encrypt3d {
 
   Chiffre64 Chiffre64::fromChiffre32(const Chiffre32& value)
   {
-    return Chiffre64::fromUint32(value.toUint32());
+    return fromFloat(value.toFloat());
   }
 
   Chiffre64 Chiffre64::mantisse() const
@@ -70,7 +68,7 @@ namespace encrypt3d {
 
   std::ostream& operator<<(std::ostream& os, const Chiffre64& c)
   {
-    os << std::bitset<64>(c.toUint64()) << std::endl;
+    os << std::bitset<64>(c.toUint64());
     return os;
   }
 

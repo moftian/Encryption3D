@@ -7,6 +7,8 @@
 
 namespace encrypt3d {
 
+  class Chiffre64;
+
   class Chiffre32 {
   private:
     float  m_float {};
@@ -20,9 +22,13 @@ namespace encrypt3d {
 
     static Chiffre32 fromFloat(float value);
 
+    static Chiffre32 fromUint32(uint32_t value);
+
     static Chiffre32 fromDouble(double value);
 
-    static Chiffre32 fromUint32(uint32_t value);
+    static Chiffre32 fromUint64(uint64_t value);
+
+    static Chiffre32 fromChiffre64(const Chiffre64& value);
 
     Chiffre32 mantisse() const;
 
