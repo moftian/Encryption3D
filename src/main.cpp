@@ -4,6 +4,7 @@
 #include <sstream>
 #include <libigl/include/igl/opengl/glfw/imgui/ImGuiMenu.h>
 #include <libigl/external/imgui/imgui.h>
+#include <libigl/include/igl/hausdorff.h>
 
 #include "encryption3d.hpp"
 #include "chiffre32.hpp"
@@ -51,9 +52,11 @@ int main(int argc, char** argv)
   std::string decryptedMessage;
   decryptedMessage.reserve(128);
 
+  double hausdorff_distance = 0.0;
+
   menu.callback_draw_viewer_window = [&](){
     ImGui::SetNextWindowPos(ImVec2(0, 0));
-    ImGui::SetNextWindowSize(ImVec2(200, 380), ImGuiSetCond_Always);
+    ImGui::SetNextWindowSize(ImVec2(200, 460), ImGuiSetCond_Always);
     ImGui::Begin("Parameters", nullptr,ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoScrollbar);
 
     ImGui::PushItemWidth(120);
@@ -75,6 +78,8 @@ int main(int argc, char** argv)
 
     {
       if (ImGui::Button("Execute(Paillier)", ImVec2(-1, 0))) {
+        // Clear decrypted message
+        decryptedMessage = "";
         // Load mesh file
         std::string path = "../models/" + std::string(items[item_current]);
         std::string ext = path.substr(path.find_last_of('.') + 1, 3);
@@ -93,6 +98,7 @@ int main(int argc, char** argv)
 
     {
       if (ImGui::Button("Execute(Naive)", ImVec2(-1, 0))) {
+        decryptedMessage = "";
         // Load mesh file
         std::string path = "../models/" + std::string(items[item_current]);
         std::string ext = path.substr(path.find_last_of('.') + 1, 3);
@@ -140,6 +146,20 @@ int main(int argc, char** argv)
       ImGui::Spacing();
       ImGui::Separator();
       ImGui::InputTextMultiline("Decrypted\nMessage", &decryptedMessage[0], decryptedMessage.size());
+    }
+
+    {
+      if (ImGui::Button("Calc Distance Hausdorff", ImVec2(-1, 0))) {
+        if (V.size() != 0 && decryptedV.size() != 0) {
+          Eigen::MatrixXd v = decryptedV.cast<double>();
+          igl::hausdorff(V, F, v, F, hausdorff_distance);
+        }
+      }
+    }
+
+    {
+      ImGui::InputDouble("Hausdorff\nDistance ", &hausdorff_distance, 0, 0, "%.4f", ImGuiInputTextFlags_ReadOnly);
+      ImGui::Separator();
     }
 
     ImGui::PopItemWidth();
